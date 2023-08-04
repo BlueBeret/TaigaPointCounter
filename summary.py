@@ -1,6 +1,5 @@
 import calendar
 import os
-import requests
 from datetime import datetime
 from dotenv import load_dotenv
 import getpass
@@ -24,6 +23,10 @@ HOST = os.environ.get('HOST')
 IGNORED_PROJECTS = [int(x) for x in os.environ.get('IGNORED_PROJECTS').split(",")]
 
 API_URL = f"{HOST}/api/v1"
+
+import requests_cache
+
+requests = requests_cache.CachedSession('demo_cache')
 
 
 class TaigaInterface:
@@ -66,7 +69,7 @@ class TaigaInterface:
             print(resp.json())
         return resp.json()
     def getUsers(self):
-        resp = requests.get(f"{API_URL}/users")
+        resp = requests.get(f"{API_URL}/users",  headers={"Authorization": f"Bearer {self.auth_token}"})
         if resp.status_code != 200:
             print(resp.json())
         userlist = resp.json()
@@ -80,8 +83,8 @@ class UserInterface:
     def __init__(self, taiga_interface):
         self.taiga = taiga_interface
         self.projects = self.getProjects()
-        self.first_day = datetime.today().replace(day=1)
-        self.last_day = datetime.today().replace(day=calendar.monthrange(datetime.today().year, datetime.today().month)[1])
+        self.first_day = datetime(2023,7,1)
+        self.last_day = datetime(2023,7,31)
         self.overall_points = 0
         self.allUsersPoints = {}
 

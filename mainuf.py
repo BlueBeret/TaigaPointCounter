@@ -67,11 +67,11 @@ class TaigaInterface:
         return resp.json()
 
 class UserInterface:
-    def __init__(self, taiga_interface):
+    def __init__(self, taiga_interface, month=datetime.now().month, year=datetime.now().year):
         self.taiga = taiga_interface
         self.projects = self.getProjects()
-        self.first_day = datetime.today().replace(day=1)
-        self.last_day = datetime.today().replace(day=calendar.monthrange(datetime.today().year, datetime.today().month)[1])
+        self.first_day = datetime(year, month, 1)
+        self.last_day = datetime(year, month, calendar.monthrange(year, month)[1])
         self.overall_points = 0
 
     def getProjects(self):
@@ -108,6 +108,7 @@ class UserInterface:
                     print(f"\t{userstory['subject']} \t {userstory['total_points'] / len(userstory['assigned_users'])}")
         print(f"Total points: {point_total}")
         self.overall_points += point_total
+ 
 
 if __name__ == "__main__":
     if (HOST is None or USERNAME is None):
@@ -117,7 +118,7 @@ if __name__ == "__main__":
         PASSWORD = getpass.getpass("Please enter your password: ")
     
     taiga = TaigaInterface(USERNAME, PASSWORD)
-    ui = UserInterface(taiga)
+    ui = UserInterface(taiga, int(input("Please enter the month: ")), int(input("Please enter the year: ")))
     ui.printProjects()
     for project in ui.projects:
         ui.printMilestones(project)
