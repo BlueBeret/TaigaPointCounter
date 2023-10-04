@@ -3,11 +3,10 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 import getpass
+from taiga import TaigaInterface
 
 load_dotenv()
 
-USERNAME = os.environ.get('USERNAME')
-PASSWORD = os.environ.get('PASSWORD')
 HOST = os.environ.get('HOST')
 IGNORED_PROJECTS = os.environ.get('IGNORED_PROJECTS')
 if IGNORED_PROJECTS is None:
@@ -17,7 +16,7 @@ else:
 
 API_URL = f"{HOST}/api/v1"
 
-USERNAME = os.environ.get('USERNAME')
+USERNAME = os.environ.get('TAIGA_USERNAME')
 PASSWORD = os.environ.get('PASSWORD')
 HOST = os.environ.get('HOST')
 IGNORED_PROJECTS = [int(x) for x in os.environ.get('IGNORED_PROJECTS').split(",")]
@@ -29,62 +28,12 @@ import requests_cache
 requests = requests_cache.CachedSession('demo_cache')
 
 
-class TaigaInterface:
-    def __init__(self, username, password):
-        self.user = self.login(username, password)
-        self.auth_token = self.user["auth_token"]
-
-    def login(self, username, password) -> dict:
-        print("Logging in...")
-        # login to the api
-        response = requests.post(f"{API_URL}/auth", json={"username": username, "password": password, "type": "normal"})
-        # return the token
-        if response.status_code != 200:
-            print(response.json())
-            exit(1)
-        print("Login successful!")
-        return {"auth_token": response.json()["auth_token"], "refresh": response.json()["refresh"], "full_name": response.json()["full_name"], "id": response.json()["id"]}
-    
-    def getProjectList(self):
-        resp = requests.get(f"{API_URL}/projects", headers={"Authorization": f"Bearer {self.auth_token}"})
-        if resp.status_code != 200:
-            print(resp.json())
-        return resp.json()
-
-    def getProject(self, project_id):
-        resp = requests.get(f"{API_URL}/projects/{project_id}", headers={"Authorization": f"Bearer {self.auth_token}"})
-        if resp.status_code != 200:
-            print(resp.json())
-        return resp.json()
-
-    def listMilestoneByProject(self, project_id):
-        resp = requests.get(f"{API_URL}/milestones?project={project_id}", headers={"Authorization": f"Bearer {self.auth_token}"})
-        if resp.status_code != 200:
-            print(resp.json())
-        return resp.json()
-
-    def getUserStory(self, userstory_id):
-        resp = requests.get(f"{API_URL}/userstories/{userstory_id}", headers={"Authorization": f"Bearer {self.auth_token}"})
-        if resp.status_code != 200:
-            print(resp.json())
-        return resp.json()
-    def getUsers(self):
-        resp = requests.get(f"{API_URL}/users",  headers={"Authorization": f"Bearer {self.auth_token}"})
-        if resp.status_code != 200:
-            print(resp.json())
-        userlist = resp.json()
-
-        self.users = []
-        for user in userlist:
-            self.users.append({"id": user["id"], "full_name": user["full_name"]})
-        return self.users
-
 class UserInterface:
     def __init__(self, taiga_interface):
         self.taiga = taiga_interface
         self.projects = self.getProjects()
-        self.first_day = datetime(2023,7,1)
-        self.last_day = datetime(2023,7,31)
+        self.first_day = datetime(2023,9,1)
+        self.last_day = datetime(2023,9,30)
         self.overall_points = 0
         self.allUsersPoints = {}
 
@@ -143,7 +92,7 @@ if __name__ == "__main__":
     if (PASSWORD == "" or PASSWORD is None):
         PASSWORD = getpass.getpass("Please enter your password: ")
     
-    taiga = TaigaInterface(USERNAME, PASSWORD)
+    taiga = TaigaInterface(USERNAME, PASSWORD, API_URL)
     ui = UserInterface(taiga)
     projects = taiga.getProjectList()
     users = taiga.getUsers()

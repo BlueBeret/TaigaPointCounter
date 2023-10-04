@@ -3,3 +3,4 @@
 tmpvenv
 *.csv
 *.sqlite
+__pycache__/
